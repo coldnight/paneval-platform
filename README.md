@@ -61,8 +61,10 @@ poetry install --no-root
    PANEVAL_DOCS_BUILD_OUT_DIR=/path/to/docs-build-output-dir/.vitepress/dist
    PANEVAL_EXECUTOR_HTTP_USER=paneval
    PANEVAL_EXECUTOR_HTTP_PASSWD='${PANEVAL_SECRET}'
-   PANEVAL_EXECUTOR_SSH_PUBLIC_KEY='' # cat id_ed25519.pub
+   PANEVAL_EXECUTOR_SSH_PORT=3022
+   PANEVAL_EXECUTOR_SSH_PUBLIC_KEY='' # One key, or multiple keys separated by semicolons/newlines
    PANEVAL_EXECUTOR_SSH_PRIVATE_KEY='' # cat id_ed25519 | base64
+   PANEVAL_SSH_EXECUTOR_INSTANCES='' # Multi-host example: root@machine1,root@machine2
    ```
    Start
     ```shell

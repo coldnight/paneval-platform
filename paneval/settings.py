@@ -296,6 +296,12 @@ SSH_EXECUTOR = {
     },
 }
 
+PANEVAL_SSH_EXECUTOR_INSTANCES = [
+    instance.strip()
+    for instance in os.environ.get('PANEVAL_SSH_EXECUTOR_INSTANCES', '').split(',')
+    if instance.strip()
+] or [SSH_EXECUTOR['conf']['online_ssh_host']]
+
 # 分块上传的大小
 CHUNK_SIZE_KB = 10 * 1024  # 10M
 
