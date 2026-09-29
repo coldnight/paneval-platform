@@ -52,7 +52,6 @@ pythonm=/root/miniconda3/bin/python
 export PYTHONPATH="./:$work_dir/paneval:$PYTHONPATH"
 # export EVALMM_API_KEY="TODO"
 # export EVALMM_BASE_URL="TODO"
-export HF_ENDPOINT='https://hf-mirror.com'
 export HF_HOME='/share/project/huggingface-240306'
 
 if [ -d "~/.cache/torch/hub/checkpoints" ]; then
@@ -62,7 +61,8 @@ if [ -d "/root/.cache/evalmm/datasets" ]; then
     echo "new Directory exists"
 else
     mkdir -p ~/.cache/evalmm
-    ln -s $DATASETS_DATASET_DOWNLOAD_PATH  ~/.cache/evalmm/datasets
+    mkdir -p /share/project/evalmm-cache
+    ln -fns /share/project/evalmm-cache  ~/.cache/evalmm/datasets
 fi
 
 tryrun=`$pythonm helper.py tryrun 2>>$log_path`

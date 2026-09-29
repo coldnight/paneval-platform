@@ -89,7 +89,6 @@ class ExecutorService:
         _environ['LOG_PATH'] = log_path
         _environ['EVAL_LOG_PATH'] = self.get_log_path(batch_id, 'eval', try_sequence)
         _environ['FEAM_VENV'] = os.path.join(_environ['THIRD_PARTY'], '/tmp/venv')
-        _environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
         _environ['HF_HOME'] = '/share/project/huggingface-240306' # Update this to refresh huggingface cache
         # # https://huggingface.co/docs/transformers/installation#offline-mode
         # _environ['HF_DATASETS_OFFLINE'] = '1'

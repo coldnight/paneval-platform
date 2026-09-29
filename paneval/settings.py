@@ -246,10 +246,6 @@ STORAGE_DATASETS = {
             'STORAGE_KEY': 'mnt/evalmm/conda/20260624',
             'DOWNLOAD_ID': 'a33068a6-5c1e-4083-97a8-7313d1ba5d29',
         },
-        'datasets': {
-            'STORAGE_KEY': 'mnt/evalmm/datasets/20260624',
-            'DOWNLOAD_ID': 'edcdc508-165f-49ea-8e12-35546b6def0f',
-        },
     }
 }
 
