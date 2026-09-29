@@ -683,12 +683,15 @@ def run_online(batch_id: int, try_sequence: int, download_job: SyncJob):
             port = online_port(batch)
 
             fenv_dir=f"/share/project/mmenv/{batch.pk}.{batch.try_sequence}"
-            subprocess.run(service.online_ssh_exe_cmd(f"mkdir {fenv_dir}"))
+            subprocess.run(
+                service.online_ssh_exe_cmd(f"mkdir -p {fenv_dir}"),
+                check=True,
+            )
             cmd = service.online_rsync_to_remote(
                 os.path.join(settings.BASE_DIR, "third_party/mm/"),
                 f"{fenv_dir}/__paneval__",
             )
-            subprocess.run(cmd, capture_output=True, text=True)
+            subprocess.run(cmd, capture_output=True, text=True, check=True)
             cmd = service.online_ssh_exe_cmd(
                 f"bash -x ~/online_third_party/mm.sh {batch.pk}.{batch.try_sequence} "
                 f"{executor.service.get_log_path(batch.pk, 'app', batch.try_sequence)} "
@@ -706,7 +709,11 @@ def run_online(batch_id: int, try_sequence: int, download_job: SyncJob):
             args=(batch.pk,),
             countdown=60,
         )
-    except (executor.ExecutorInstanceError, executor.ExecutorUnreachable) as exc:
+    except (
+        executor.ExecutorInstanceError,
+        executor.ExecutorUnreachable,
+        subprocess.CalledProcessError,
+    ) as exc:
         on_error.delay(batch.pk, models.Batch.FailureKind.SYSTEM, str(exc))
 
 

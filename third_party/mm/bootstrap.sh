@@ -10,13 +10,8 @@ if [ "x$port" == "x" ];then
     port=5000
 fi
 
-if [ -d "$work_dir/paneval" ]; then
-    echo "this is online"
-else
-    CODE_TAR_GZ=$(find $CONDA_DATASET_DOWNLOAD_PATH -name 'paneval.tar.gz')
-    mkdir ./paneval
-    tar -zxf $CODE_TAR_GZ -C ./paneval
-fi
+bash -e "$work_dir/prepare_tasks.sh"
+
 if [ -d "/root/miniconda3" ]; then
     echo "Directory exists"
 else

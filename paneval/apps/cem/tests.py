@@ -1,6 +1,9 @@
+import os
+import subprocess
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+from django.conf import settings
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
 
@@ -208,6 +211,58 @@ class ExecutorRoutingTests(BatchTestMixin, TestCase):
             'executor instance root@m1 is not ready',
         )
         popen.assert_not_called()
+
+    def test_multimodal_syncs_task_tree_before_launch_on_pinned_executor(self):
+        evaluation = self.create_evaluation(domain=Evaluation.Domain.MULTI)
+        batch = self.create_batch(evaluation, executor_instance='root@m1')
+        process = Mock(pid=123)
+        sequence = Mock()
+        with (
+            patch.object(tasks, 'executor_instance_ready', return_value=True),
+            patch.object(tasks, '_build_environ', return_value={}),
+            patch.object(tasks, 'merge_lbx_batch', return_value=[]),
+            patch.object(tasks, 'online_port', return_value='43123'),
+            patch.object(tasks.subprocess, 'run') as run,
+            patch.object(tasks.subprocess, 'Popen', return_value=process) as popen,
+            patch.object(tasks.threading, 'Thread'),
+            patch.object(tasks.watch_batch, 'apply_async'),
+        ):
+            sequence.attach_mock(run, 'run')
+            sequence.attach_mock(popen, 'launch')
+            tasks.run_online(batch.pk, batch.try_sequence, tasks.SyncJob('model'))
+
+        self.assertEqual([c[0] for c in sequence.mock_calls], ['run', 'run', 'launch'])
+        mkdir, sync = run.call_args_list
+        self.assertIn('root@m1', mkdir.args[0])
+        self.assertTrue(mkdir.kwargs['check'])
+        self.assertEqual(sync.args[0][-2:], [
+            os.path.join(settings.BASE_DIR, 'third_party/mm/'),
+            f'root@m1:/share/project/mmenv/{batch.pk}.{batch.try_sequence}/__paneval__',
+        ])
+        self.assertTrue(sync.kwargs['check'])
+        self.assertIn('root@m1', popen.call_args.args[0])
+
+    def test_multimodal_transfer_failure_prevents_launch(self):
+        evaluation = self.create_evaluation(domain=Evaluation.Domain.MULTI)
+        batch = self.create_batch(evaluation, executor_instance='root@m1')
+        for failed_step in ('mkdir', 'rsync'):
+            with self.subTest(failed_step=failed_step):
+                error = subprocess.CalledProcessError(23, [failed_step])
+                results = [error] if failed_step == 'mkdir' else [Mock(), error]
+                with (
+                    patch.object(tasks, 'executor_instance_ready', return_value=True),
+                    patch.object(tasks, '_build_environ', return_value={}),
+                    patch.object(tasks, 'merge_lbx_batch', return_value=[]),
+                    patch.object(tasks, 'online_port', return_value='43123'),
+                    patch.object(tasks.subprocess, 'run', side_effect=results),
+                    patch.object(tasks.subprocess, 'Popen') as popen,
+                    patch.object(tasks.watch_batch, 'apply_async') as watch,
+                    patch.object(tasks.on_error, 'delay') as on_error,
+                ):
+                    tasks.run_online(batch.pk, batch.try_sequence, tasks.SyncJob('model'))
+                popen.assert_not_called()
+                watch.assert_not_called()
+                on_error.assert_called_once_with(batch.pk, models.Batch.FailureKind.SYSTEM, str(error))
 
     @patch.object(tasks.notify_status, 'delay')
     @patch.object(tasks.kill_online, 'apply_async')
