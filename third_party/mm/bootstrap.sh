@@ -70,6 +70,7 @@ tasks=`$pythonm helper.py tasks 2>>$log_path`
 adapter=`$pythonm helper.py adapter 2>>$log_path`
 HF_PRETRAINED=`$pythonm helper.py nlp-pretrained 2>>$log_path | cat`
 online=`$pythonm helper.py online 2>>$log_path`
+online_model_name=`$pythonm helper.py onlinemodelname 2>>$log_path`
 out_dir=$work_dir/outputs
 mkdir $out_dir
 
@@ -144,19 +145,18 @@ run() {
     if [ -z "$tasks" ]; then
         echo "tasks is empty"
     else
-        cd paneval
+        pushd paneval
         $pythonm evalmm/server/run_server.py --port $port --tasks $tasks --checkpoint="$adapter" --output-dir $out_dir $tryrun &>$log_path &
         pid=$!
-        sleep 30
-        cd ..
-        cd ..
-        pwd
+        popd
+        $pythonm helper.py portused $port
+        cp -av paneval/model_zoo/vlm/api_model/* temp/
+        cp ../meta.json temp/
+        pushd temp
         echo "begin run client run.sh..." >>$log_path
-        bash -x run.sh http://127.0.0.1 $port &
-        #nohup bash -x run.sh http://127.0.0.1 5000 &>>$log_path &
+        bash -x temp.sh http://127.0.0.1 $port $online_model_name &
         pid1=$!
-
-        cd -
+        popd
         $pythonm helper.py output $out_dir $pid1 $port $log_path | cat
 
         kill -9 $pid | cat

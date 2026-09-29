@@ -792,7 +792,8 @@ def _build_environ(batch: models.Batch, eva: Evaluation, download_job: SyncJob) 
         'RUNNING_BATCH_ID': str(batch.pk),
         'EVALUATION_MODEL_NAME': eva.online_model_name if eva.online_model_name else eva.name,
         'EVALUATION_MODEL_TYPE': eva.model_type,
-        "EVALUATION_GEN_KWARGS":eva.model_gen_kwargs if eva.model_gen_kwargs else default_gen_kwargs,
+        "EVALUATION_GEN_KWARGS": eva.model_gen_kwargs if eva.model_gen_kwargs else default_gen_kwargs,
+        'FILESYSTEM_OBJECT_STORAGE_PATH': storage.store.get_conf()['base_dir'],
     }
     if eva.tokenizer and 'tokenizer_name' in eva.tokenizer:
         environ['EVALUATION_MODEL_TOKENIZER'] = eva.tokenizer["tokenizer_name"]
