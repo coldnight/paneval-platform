@@ -65,6 +65,7 @@ else
     ln -fns /share/project/evalmm-cache  ~/.cache/evalmm/datasets
 fi
 
+batch_id=`$pythonm helper.py batchid 2>>$log_path` # This is used to initial status state file.
 tryrun=`$pythonm helper.py tryrun 2>>$log_path`
 tasks=`$pythonm helper.py tasks 2>>$log_path`
 adapter=`$pythonm helper.py adapter 2>>$log_path`
